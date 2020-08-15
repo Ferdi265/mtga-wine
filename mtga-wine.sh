@@ -70,6 +70,11 @@ mtga-winetricks() {
 
 # commands
 mtga-install() {
+    if [[ -e "$DESTDIR/mtga/prefix" ]]; then
+        echo "${Y}warn:${N} mtga-wine is already installed, skipping installation"
+        return
+    fi
+
     echo "${W}info:${N} installing mtga-wine"
 
     echo "${B}debug:${N} creating wine prefix"
@@ -85,6 +90,9 @@ mtga-install() {
 
     echo "${B}debug:${N} removing temporary files"
     rm -rf "$TEMP_DIR"
+
+    echo "${B}debug:${N} running initial update"
+    mtga-update
 }
 
 mtga-update() {
