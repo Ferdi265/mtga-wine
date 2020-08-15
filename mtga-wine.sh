@@ -11,9 +11,9 @@ MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Li
 # output color variables
 # (see 'man console_codes', section 'ECMA-48 Set Graphics Rendition')
 R=$'\e[1;31m'
-G=$'\e[1;31m'
-Y=$'\e[1;31m'
-B=$'\e[1;31m'
+G=$'\e[1;32m'
+Y=$'\e[1;33m'
+B=$'\e[1;34m'
 W=$'\e[1;37m'
 N=$'\e[0m'
 
