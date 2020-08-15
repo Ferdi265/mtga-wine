@@ -5,7 +5,7 @@ SCRIPT_FILE="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 
 # environment variable defaults
-DESTDIR="${DESTDIR:-~/.local/share}"
+DESTDIR="${DESTDIR:-"$HOME/.local/share"}"
 MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
 
 # output color variables
