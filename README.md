@@ -5,7 +5,7 @@ A simple script that manages a wine prefix for Magic: The Gathering Arena.
 ## Usage
 
 ```
-usage: /home/yrlf/.bin/mtga [command]
+usage: mtga-wine.sh [command]
 
 commands:
  - install .... download MTG Arena and prepare wine prefix
