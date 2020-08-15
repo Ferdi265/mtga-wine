@@ -8,11 +8,12 @@ A simple script that manages a wine prefix for Magic: The Gathering Arena.
 usage: mtga-wine.sh [command]
 
 commands:
- - install .... download MTG Arena and prepare wine prefix
- - update ..... patch MTG Arena to the latest version
- - run ........ run MTG Arena
- - run-nogc ... run MTG Arena (without garbage collector)
- - uninstall .. remove MTG arena wine prefix
+ - run ............. run MTG Arena
+ - run-nogc ........ run MTG Arena (without garbage collector)
+ - install ......... download MTG Arena and prepare wine prefix
+ - update .......... update MTG Arena to the latest version
+ - uninstall ....... remove MTG arena wine prefix
+ - install-dxvk .... install DXVK into the wine prefix
 ```
 
 ## Installation
@@ -34,4 +35,5 @@ This script needs the following programs to work:
 - `wine`
 - `curl`
 - `jq`
+- `tar`
 - `mktemp` (part of GNU coreutils)
