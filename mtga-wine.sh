@@ -129,8 +129,9 @@ mtga-update() {
     log-info "updating mtga-wine"
 
     log-debug "getting latest installer URL"
-    INSTALLER_URL="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.CurrentInstallerURL')"
-    INSTALLER_VERSION="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.Versions | keys[]' | head -n1)"
+    INSTALLER_JSON="$(curl --silent "$MTGA_VERSION_URL")"
+    INSTALLER_URL="$(jq -r '.CurrentInstallerURL' <<< "$INSTALLER_JSON")"
+    INSTALLER_VERSION="$(jq -r '.Versions | keys[]' <<< "$INSTALLER_JSON" | head -n1)"
 
     log-info "latest version is $INSTALLER_VERSION"
     if [[ -f "$MTGA_INSTALL_DIR/version" ]]; then
