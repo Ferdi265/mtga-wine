@@ -133,6 +133,21 @@ mtga-update() {
     INSTALLER_URL="$(jq -r '.CurrentInstallerURL' <<< "$INSTALLER_JSON")"
     INSTALLER_VERSION="$(jq -r '.Versions | keys[]' <<< "$INSTALLER_JSON" | head -n1)"
 
+    if [[ "$INSTALLER_JSON" == "" ]]; then
+        log-error "failed to get latest version information"
+        exit 1
+    fi
+
+    if [[ "$INSTALLER_URL" == "" ]]; then
+        log-error "failed to extract installer URL from latest version information"
+        exit 1
+    fi
+
+    if [[ "$INSTALLER_VERSION" == "" ]]; then
+        log-error "failed to extract version number from latest version information"
+        exit 1
+    fi
+
     log-info "latest version is $INSTALLER_VERSION"
     if [[ -f "$MTGA_INSTALL_DIR/version" ]]; then
         CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/version")"
@@ -141,13 +156,18 @@ mtga-update() {
 
         if [[ "$INSTALLER_VERSION" == "$CURRENT_VERSION" ]]; then
             log-info "mtga-wine is up to date"
-            return
+            exit 0
         fi
     fi
 
-    log-debug "downloading installer"
+    log-debug "downloading latest installer"
     TEMP_DIR="$(temp-dir)"
     curl -o "$TEMP_DIR/mtga-installer.msi" "$INSTALLER_URL"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to download latest installer"
+        exit 1
+    fi
 
     log-info "running latest installer"
     mtga-wine msiexec /i "$TEMP_DIR/mtga-installer.msi" /qn
