@@ -5,7 +5,7 @@ SCRIPT_FILE="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 
 # environment variable defaults
-DESTDIR="${DESTDIR:-"$HOME/.local/share"}"
+MTGA_DESTDIR="${MTGA_DESTDIR:-"$HOME/.local/share/mtga"}"
 MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
 MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
 
@@ -53,6 +53,13 @@ noisy-rm-dir() {
     fi
 }
 
+noisy-rm-file() {
+    if [[ -f "$1" ]]; then
+        log-info "removing '$1'"
+        rm -f "$1"
+    fi
+}
+
 temp-dir() {
     mktemp -d -t 'mtga.tmp.XXXXXXXXXX'
 }
@@ -67,13 +74,13 @@ EOF
 }
 
 mtga-wine() {
-    mkdir -p "$DESTDIR/mtga/prefix"
-    WINEPREFIX="$DESTDIR/mtga/prefix" wine "$@"
+    mkdir -p "$MTGA_DESTDIR/prefix"
+    WINEPREFIX="$MTGA_DESTDIR/prefix" wine "$@"
 }
 
 mtga-winetricks() {
-    mkdir -p "$DESTDIR/mtga/prefix"
-    WINEPREFIX="$DESTDIR/mtga/prefix" winetricks "$@"
+    mkdir -p "$MTGA_DESTDIR/prefix"
+    WINEPREFIX="$MTGA_DESTDIR/prefix" winetricks "$@"
 }
 
 # check for needed programs
@@ -93,7 +100,7 @@ fi
 # commands
 
 mtga-install() {
-    if [[ -e "$DESTDIR/mtga/prefix" ]]; then
+    if [[ -e "$MTGA_DESTDIR/prefix" ]]; then
         log-error "mtga-wine is already installed"
         exit 1
     fi
@@ -120,7 +127,7 @@ mtga-install() {
 }
 
 mtga-update() {
-    if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
+    if [[ ! -d "$MTGA_DESTDIR/prefix" ]]; then
         log-error "mtga-wine is not installed, please install first"
         exit 1
     fi
@@ -132,8 +139,8 @@ mtga-update() {
     INSTALLER_VERSION="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.Versions | keys[]' | head -n1)"
 
     log-info "latest version is $INSTALLER_VERSION"
-    if [[ -f "$DESTDIR/mtga/version" ]]; then
-        CURRENT_VERSION="$(cat "$DESTDIR/mtga/version")"
+    if [[ -f "$MTGA_DESTDIR/version" ]]; then
+        CURRENT_VERSION="$(cat "$MTGA_DESTDIR/version")"
 
         log-info "current version is $CURRENT_VERSION"
 
@@ -154,13 +161,13 @@ mtga-update() {
     rm -rf "$TEMP_DIR"
 
     log-debug "saving current version"
-    echo "$INSTALLER_VERSION" > "$DESTDIR/mtga/version"
+    echo "$INSTALLER_VERSION" > "$MTGA_DESTDIR/version"
 
     log-info "update infinished"
 }
 
 mtga-run() {
-    if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
+    if [[ ! -d "$MTGA_DESTDIR/prefix" ]]; then
         log-error "mtga-wine is not installed, please install first"
         exit 1
     fi
@@ -174,8 +181,8 @@ mtga-run-nogc() {
 
 mtga-uninstall() {
     log-info "uninstalling mtga-wine"
-    noisy-rm-dir "$DESTDIR/mtga/prefix"
-    noisy-rm-dir "$DESTDIR/mtga"
+    noisy-rm-dir "$MTGA_DESTDIR/prefix"
+    noisy-rm-file "$MTGA_DESTDIR/version"
 }
 
 mtga-help() {
