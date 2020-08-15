@@ -172,7 +172,10 @@ mtga-run() {
         exit 1
     fi
 
-    mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
+    (
+        cd "$MTGA_INSTALL_DIR"
+        mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
+    )
 }
 
 mtga-run-nogc() {
