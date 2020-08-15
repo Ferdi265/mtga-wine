@@ -101,8 +101,10 @@ mtga-run() {
         exit 1
     fi
 
+    mkdir -p "$MTGA_INSTALL_DIR/cache"
+
     (
-        cd "$MTGA_INSTALL_DIR"
+        cd "$MTGA_INSTALL_DIR/cache"
         mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
     )
 }
@@ -202,6 +204,7 @@ mtga-update() {
 mtga-uninstall() {
     log-info "uninstalling mtga-wine"
     noisy-rm-dir "$MTGA_INSTALL_DIR/prefix"
+    noisy-rm-dir "$MTGA_INSTALL_DIR/cache"
     noisy-rm-file "$MTGA_INSTALL_DIR/version"
     noisy-rm-file "$MTGA_INSTALL_DIR/dxvk-version"
 }
