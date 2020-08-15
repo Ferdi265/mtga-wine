@@ -61,10 +61,12 @@ EOF
 }
 
 mtga-wine() {
+    mkdir -p "$DESTDIR/mtga/prefix"
     WINEPREFIX="$DESTDIR/mtga/prefix" wine "$@"
 }
 
 mtga-winetricks() {
+    mkdir -p "$DESTDIR/mtga/prefix"
     WINEPREFIX="$DESTDIR/mtga/prefix" winetricks "$@"
 }
 
