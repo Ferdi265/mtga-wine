@@ -23,9 +23,17 @@ placed.
 
 The default installation directory is `~/.local/share/mtga`.
 
-Then, run `mtga install` to set up the prefix and install Magic: The Gathering
-Arena. Newer versions of Magic: The Gathering Arena can be installed by running
-`mtga update`.
+Then, run `mtga-wine.sh install` to set up the prefix and install Magic: The
+Gathering Arena. Newer versions of Magic: The Gathering Arena can be installed
+by running `mtga-wine.sh update`.
+
+## Updating
+
+You can update Magic: The Gathering Arena with `mtga-wine.sh update`. This will
+update the game if a newer version exists.
+
+DXVK can be updated by running `mtga-wine.sh install-dxvk` after it has already
+been installed.
 
 ## Dependencies
 
