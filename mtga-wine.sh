@@ -81,10 +81,10 @@ mtga-wine() {
 # check for needed programs
 
 MISSING_PROGRAMS=0
+check-installed wine
 check-installed curl
 check-installed jq
 check-installed mktemp
-check-installed wine
 
 if [[ $MISSING_PROGRAMS -ne 0 ]]; then
     log-error "aborting due to missing required commands"
