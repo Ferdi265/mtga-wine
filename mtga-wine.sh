@@ -49,14 +49,14 @@ check-installed() {
 
 noisy-rm-dir() {
     if [[ -d "$1" ]]; then
-        log-info "removing '$1'"
+        log-debug "removing '$1'"
         rm -rf "$1"
     fi
 }
 
 noisy-rm-file() {
     if [[ -f "$1" ]]; then
-        log-info "removing '$1'"
+        log-debug "removing '$1'"
         rm -f "$1"
     fi
 }
@@ -107,10 +107,6 @@ mtga-run() {
         cd "$MTGA_INSTALL_DIR/cache"
         mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
     )
-}
-
-mtga-run-nogc() {
-    GC_DONT_GC=1 mtga-run
 }
 
 mtga-install() {
@@ -283,7 +279,6 @@ mtga-help() {
     echo
     echo "${W}commands:${N}"
     echo " - run ............. run MTG Arena"
-    echo " - run-nogc ........ run MTG Arena (without garbage collector)"
     echo " - install ......... download MTG Arena and prepare wine prefix"
     echo " - update .......... update MTG Arena to the latest version"
     echo " - uninstall ....... remove MTG arena wine prefix"
@@ -304,7 +299,6 @@ fi
 
 case "$1" in
     run) mtga-run;;
-    run-nogc) mtga-run-nogc;;
     install) mtga-install;;
     update) mtga-update;;
     uninstall) mtga-uninstall;;

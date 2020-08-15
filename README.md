@@ -9,7 +9,6 @@ usage: mtga-wine.sh [command]
 
 commands:
  - run ............. run MTG Arena
- - run-nogc ........ run MTG Arena (without garbage collector)
  - install ......... download MTG Arena and prepare wine prefix
  - update .......... update MTG Arena to the latest version
  - uninstall ....... remove MTG arena wine prefix
