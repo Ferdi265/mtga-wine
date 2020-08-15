@@ -132,6 +132,16 @@ mtga-update() {
     INSTALLER_VERSION="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.Versions | keys[]' | head -n1)"
 
     log-info "latest version is $INSTALLER_VERSION"
+    if [[ -f "$DESTDIR/mtga/version" ]]; then
+        CURRENT_VERSION="$(cat "$DESTDIR/mtga/version")"
+
+        log-info "current version is $CURRENT_VERSION"
+
+        if [[ "$INSTALLER_VERSION" == "$CURRENT_VERSION" ]]; then
+            log-info "mtga-wine is up to date"
+            return
+        fi
+    fi
 
     log-debug "downloading installer"
     TEMP_DIR="$(temp-dir)"
@@ -142,6 +152,9 @@ mtga-update() {
 
     log-debug "removing temporary files"
     rm -rf "$TEMP_DIR"
+
+    log-debug "saving current version"
+    echo "$INSTALLER_VERSION" > "$DESTDIR/mtga/version"
 
     log-info "update infinished"
 }
