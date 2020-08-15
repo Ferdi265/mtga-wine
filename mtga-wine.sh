@@ -247,7 +247,7 @@ mtga-install-dxvk() {
 
     log-debug "downloading latest release"
     TEMP_DIR="$(temp-dir)"
-    curl -o "$TEMP_DIR/dxvk.tar.gz" "$RELEASE_URL"
+    curl -L -o "$TEMP_DIR/dxvk.tar.gz" "$RELEASE_URL"
 
     if [[ $? -ne 0 ]]; then
         log-error "failed to download latest release"
