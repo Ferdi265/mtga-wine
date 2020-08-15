@@ -6,6 +6,7 @@ SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 
 # environment variable defaults
 DESTDIR="${DESTDIR:-"$HOME/.local/share"}"
+MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
 MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
 
 # output color variables
@@ -17,32 +18,37 @@ B=$'\e[1;34m'
 W=$'\e[1;37m'
 N=$'\e[0m'
 
-# check for needed programs
-MISSING_PROGRAMS=0
+# utility functions
+
+log-error() {
+    echo "${R}error:${N} $1"
+}
+
+log-warn() {
+    echo "${Y}warn:${N} $1"
+}
+
+log-info() {
+    echo "${W}info:${N} $1"
+}
+
+log-debug() {
+    if [[ $MTGA_LOG_DEBUG -eq 1 ]]; then
+        echo "${B}debug:${N} $1"
+    fi
+}
 
 check-installed() {
     type -p "$1" >/dev/null
     if [[ $? -ne 0 ]]; then
-        echo "${R}error:${N} the '$1' command is missing!"
+        log-error "the '$1' command is missing!"
         MISSING_PROGRAMS=1
     fi
 }
 
-check-installed curl
-check-installed jq
-check-installed mktemp
-check-installed wine
-check-installed winetricks
-
-if [[ $MISSING_PROGRAMS -ne 0 ]]; then
-    echo "${R}error:${N} aborting due to missing required commands"
-    exit 1
-fi
-
-# utility functions
 noisy-rm-dir() {
     if [[ -d "$1" ]]; then
-        echo "${W}info:${N} removing '$1'"
+        log-info "removing '$1'"
         rm -rf "$1"
     fi
 }
@@ -70,58 +76,79 @@ mtga-winetricks() {
     WINEPREFIX="$DESTDIR/mtga/prefix" winetricks "$@"
 }
 
+# check for needed programs
+
+MISSING_PROGRAMS=0
+check-installed curl
+check-installed jq
+check-installed mktemp
+check-installed wine
+check-installed winetricks
+
+if [[ $MISSING_PROGRAMS -ne 0 ]]; then
+    log-error "aborting due to missing required commands"
+    exit 1
+fi
+
 # commands
+
 mtga-install() {
     if [[ -e "$DESTDIR/mtga/prefix" ]]; then
-        echo "${R}error:${N} mtga-wine is already installed"
+        log-error "mtga-wine is already installed"
         exit 1
     fi
 
-    echo "${W}info:${N} installing mtga-wine"
+    log-info "installing mtga-wine"
 
-    echo "${B}debug:${N} creating wine prefix"
+    log-debug "creating wine prefix"
     mtga-wine wineboot
 
-    echo "${B}debug:${N} setting windows version to win7"
+    log-debug "setting windows version to win7"
     mtga-wine winecfg /v win7
 
-    echo "${B}debug:${N} setting workaround registry keys"
+    log-debug "setting workaround registry keys"
     TEMP_DIR="$(temp-dir)"
     make-workaround-reg "$TEMP_DIR/workaround.reg"
     mtga-wine regedit /C "$TEMP_DIR/workaround.reg"
 
-    echo "${B}debug:${N} removing temporary files"
+    log-debug "removing temporary files"
     rm -rf "$TEMP_DIR"
 
-    echo "${B}debug:${N} running initial update"
+    log-info "running initial update"
     mtga-update
+
 }
 
 mtga-update() {
     if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
-        echo "${R}error:${N} mtga-wine is not installed, please install first"
+        log-error "mtga-wine is not installed, please install first"
         exit 1
     fi
 
-    echo "${W}info:${N} updating mtga-wine"
+    log-info "updating mtga-wine"
 
-    echo "${B}debug:${N} getting latest installer URL"
-    INSTALLER_URL="$(curl --silent "$MTGA_VERSION_URL" | jq -r ".CurrentInstallerURL")"
+    log-debug "getting latest installer URL"
+    INSTALLER_URL="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.CurrentInstallerURL')"
+    INSTALLER_VERSION="$(curl --silent "$MTGA_VERSION_URL" | jq -r '.Versions | keys[]' | head -n1)"
 
-    echo "${B}debug:${N} downloading installer"
+    log-info "latest version is $INSTALLER_VERSION"
+
+    log-debug "downloading installer"
     TEMP_DIR="$(temp-dir)"
     curl -o "$TEMP_DIR/mtga-installer.msi" "$INSTALLER_URL"
 
-    echo "${B}debug:${N} running latest installer"
+    log-info "running latest installer"
     mtga-wine msiexec /i "$TEMP_DIR/mtga-installer.msi" /qn
 
-    echo "${B}debug:${N} removing temporary files"
+    log-debug "removing temporary files"
     rm -rf "$TEMP_DIR"
+
+    log-info "update infinished"
 }
 
 mtga-run() {
     if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
-        echo "${R}error:${N} mtga-wine is not installed, please install first"
+        log-error "mtga-wine is not installed, please install first"
         exit 1
     fi
 
@@ -133,7 +160,7 @@ mtga-run-nogc() {
 }
 
 mtga-uninstall() {
-    echo "${W}info:${N} uninstalling mtga-wine"
+    log-info "uninstalling mtga-wine"
     noisy-rm-dir "$DESTDIR/mtga/prefix"
     noisy-rm-dir "$DESTDIR/mtga"
 }
@@ -150,7 +177,7 @@ mtga-help() {
 }
 
 mtga-invalid-usage() {
-    echo "${R}error:${N} invalid usage"
+    log-error "invalid usage"
     mtga-help
     exit 1
 }
