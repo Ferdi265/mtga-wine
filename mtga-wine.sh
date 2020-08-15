@@ -85,6 +85,7 @@ MISSING_PROGRAMS=0
 check-installed wine
 check-installed curl
 check-installed jq
+check-installed tar
 check-installed mktemp
 
 if [[ $MISSING_PROGRAMS -ne 0 ]]; then
