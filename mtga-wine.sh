@@ -78,11 +78,6 @@ mtga-wine() {
     WINEPREFIX="$MTGA_INSTALL_DIR/prefix" wine "$@"
 }
 
-mtga-winetricks() {
-    mkdir -p "$MTGA_INSTALL_DIR/prefix"
-    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" winetricks "$@"
-}
-
 # check for needed programs
 
 MISSING_PROGRAMS=0
@@ -90,7 +85,6 @@ check-installed curl
 check-installed jq
 check-installed mktemp
 check-installed wine
-check-installed winetricks
 
 if [[ $MISSING_PROGRAMS -ne 0 ]]; then
     log-error "aborting due to missing required commands"
