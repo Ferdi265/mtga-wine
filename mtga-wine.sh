@@ -8,6 +8,7 @@ SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 MTGA_INSTALL_DIR="${MTGA_INSTALL_DIR:-"$HOME/.local/share/mtga"}"
 MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
 MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
+DXVK_RELEASE_URL="${DXVK_RELEASE_URL:-"https://api.github.com/repos/doitsujin/dxvk/releases/latest"}"
 
 # output color variables
 # (see 'man console_codes', section 'ECMA-48 Set Graphics Rendition')
@@ -92,6 +93,22 @@ if [[ $MISSING_PROGRAMS -ne 0 ]]; then
 fi
 
 # commands
+
+mtga-run() {
+    if [[ ! -d "$MTGA_INSTALL_DIR/prefix" ]]; then
+        log-error "mtga-wine is not installed, please install first"
+        exit 1
+    fi
+
+    (
+        cd "$MTGA_INSTALL_DIR"
+        mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
+    )
+}
+
+mtga-run-nogc() {
+    GC_DONT_GC=1 mtga-run
+}
 
 mtga-install() {
     if [[ -e "$MTGA_INSTALL_DIR/prefix" ]]; then
@@ -181,37 +198,92 @@ mtga-update() {
     log-info "update infinished"
 }
 
-mtga-run() {
+mtga-uninstall() {
+    log-info "uninstalling mtga-wine"
+    noisy-rm-dir "$MTGA_INSTALL_DIR/prefix"
+    noisy-rm-file "$MTGA_INSTALL_DIR/version"
+    noisy-rm-file "$MTGA_INSTALL_DIR/dxvk-version"
+}
+
+mtga-install-dxvk() {
     if [[ ! -d "$MTGA_INSTALL_DIR/prefix" ]]; then
         log-error "mtga-wine is not installed, please install first"
         exit 1
     fi
 
-    (
-        cd "$MTGA_INSTALL_DIR"
-        mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
-    )
-}
+    log-info "installing DXVK into mtga-wine"
 
-mtga-run-nogc() {
-    GC_DONT_GC=1 mtga-run
-}
+    log-debug "getting latest release URL"
+    RELEASE_JSON="$(curl --silent "$DXVK_RELEASE_URL")"
+    RELEASE_URL="$(jq -r '.assets[].browser_download_url' <<< "$RELEASE_JSON" | head -n1)"
+    RELEASE_VERSION="$(jq -r '.tag_name' <<< "$RELEASE_JSON")"
 
-mtga-uninstall() {
-    log-info "uninstalling mtga-wine"
-    noisy-rm-dir "$MTGA_INSTALL_DIR/prefix"
-    noisy-rm-file "$MTGA_INSTALL_DIR/version"
+    if [[ "$RELEASE_JSON" == "" ]]; then
+        log-error "failed to get latest release information"
+        exit 1
+    fi
+
+    if [[ "$RELEASE_URL" == "" ]]; then
+        log-error "failed to extract release URL from latest release information"
+        exit 1
+    fi
+
+    if [[ "$RELEASE_VERSION" == "" ]]; then
+        log-error "failed to extract version number from latest release information"
+        exit 1
+    fi
+
+    log-info "latest DXVK version is $RELEASE_VERSION"
+    if [[ -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
+        CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/dxvk-version")"
+
+        log-info "current DXVK version is $CURRENT_VERSION"
+
+        if [[ "$RELEASE_VERSION" == "$CURRENT_VERSION" ]]; then
+            log-info "DXVK is up to date"
+            exit 0
+        fi
+    fi
+
+    log-debug "downloading latest release"
+    TEMP_DIR="$(temp-dir)"
+    curl -o "$TEMP_DIR/dxvk.tar.gz" "$RELEASE_URL"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to download latest release"
+        exit 1
+    fi
+
+    log-debug "extracting latest release"
+    tar -C "$TEMP_DIR" --strip-components=1 -xf "$TEMP_DIR/dxvk.tar.gz"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to extract latest release"
+        exit 1
+    fi
+
+    log-info "running DXVK setup script"
+    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" install
+
+    log-debug "removing temporary files"
+    rm -rf "$TEMP_DIR"
+
+    log-debug "saving current version"
+    echo "$RELEASE_VERSION" > "$MTGA_INSTALL_DIR/dxvk-version"
+
+    log-info "finished installing DXVK"
 }
 
 mtga-help() {
     echo "${W}usage:${N} $(basename "$0") [command]"
     echo
     echo "${W}commands:${N}"
-    echo " - install .... download MTG Arena and prepare wine prefix"
-    echo " - update ..... patch MTG Arena to the latest version"
-    echo " - run ........ run MTG Arena"
-    echo " - run-nogc ... run MTG Arena (without garbage collector)"
-    echo " - uninstall .. remove MTG arena wine prefix"
+    echo " - run ............. run MTG Arena"
+    echo " - run-nogc ........ run MTG Arena (without garbage collector)"
+    echo " - install ......... download MTG Arena and prepare wine prefix"
+    echo " - update .......... update MTG Arena to the latest version"
+    echo " - uninstall ....... remove MTG arena wine prefix"
+    echo " - install-dxvk .... install DXVK into the wine prefix"
 }
 
 mtga-invalid-usage() {
@@ -221,16 +293,18 @@ mtga-invalid-usage() {
 }
 
 # invocation
+
 if [[ $# -ne 1 ]]; then
     mtga-invalid-usage
 fi
 
 case "$1" in
-    install) mtga-install;;
-    update) mtga-update;;
     run) mtga-run;;
     run-nogc) mtga-run-nogc;;
+    install) mtga-install;;
+    update) mtga-update;;
     uninstall) mtga-uninstall;;
+    install-dxvk) mtga-install-dxvk;;
     help) mtga-help;;
     *) mtga-invalid-usage;;
 esac
