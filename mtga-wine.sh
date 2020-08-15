@@ -121,12 +121,12 @@ mtga-uninstall() {
 mtga-help() {
     echo "${W}usage:${N} $0 [command]"
     echo
-    echo "${W}COMMANDS:${N}"
-    echo " - ${W}install${N} .... download MTG Arena and prepare wine prefix"
-    echo " - ${W}update${N} ..... patch MTG Arena to the latest version"
-    echo " - ${W}run${N} ........ run MTG Arena"
-    echo " - ${W}run-nogc${N} ... run MTG Arena (without garbage collector)"
-    echo " - ${W}uninstall${N} .. remove MTG arena wine prefix"
+    echo "${W}commands:${N}"
+    echo " - install${N} .... download MTG Arena and prepare wine prefix"
+    echo " - update${N} ..... patch MTG Arena to the latest version"
+    echo " - run${N} ........ run MTG Arena"
+    echo " - run-nogc${N} ... run MTG Arena (without garbage collector)"
+    echo " - uninstall${N} .. remove MTG arena wine prefix"
 }
 
 mtga-invalid-usage() {
