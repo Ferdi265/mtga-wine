@@ -189,7 +189,7 @@ mtga-uninstall() {
 }
 
 mtga-help() {
-    echo "${W}usage:${N} $0 [command]"
+    echo "${W}usage:${N} $(basename "$0") [command]"
     echo
     echo "${W}commands:${N}"
     echo " - install${N} .... download MTG Arena and prepare wine prefix"
