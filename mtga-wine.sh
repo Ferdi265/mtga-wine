@@ -71,8 +71,8 @@ mtga-winetricks() {
 # commands
 mtga-install() {
     if [[ -e "$DESTDIR/mtga/prefix" ]]; then
-        echo "${Y}warn:${N} mtga-wine is already installed, skipping installation"
-        return
+        echo "${R}error:${N} mtga-wine is already installed"
+        exit 1
     fi
 
     echo "${W}info:${N} installing mtga-wine"
@@ -96,6 +96,11 @@ mtga-install() {
 }
 
 mtga-update() {
+    if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
+        echo "${R}error:${N} mtga-wine is not installed, please install first"
+        exit 1
+    fi
+
     echo "${W}info:${N} updating mtga-wine"
 
     echo "${B}debug:${N} getting latest installer URL"
@@ -113,6 +118,11 @@ mtga-update() {
 }
 
 mtga-run() {
+    if [[ ! -d "$DESTDIR/mtga/prefix" ]]; then
+        echo "${R}error:${N} mtga-wine is not installed, please install first"
+        exit 1
+    fi
+
     mtga-wine "C:/Program Files/Wizards of the Coast/MTGA/MTGA.exe"
 }
 
