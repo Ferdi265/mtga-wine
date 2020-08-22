@@ -13,6 +13,8 @@ commands:
  - update .......... update MTG Arena to the latest version
  - uninstall ....... remove MTG arena wine prefix
  - install-dxvk .... install DXVK into the wine prefix
+ - update-dxvk ..... update DXVK in the wine prefix
+ - uninstall-dxvk .. uninstall DXVK from the wine prefix
 ```
 
 ## Installation
@@ -32,8 +34,16 @@ by running `mtga-wine.sh update`.
 You can update Magic: The Gathering Arena with `mtga-wine.sh update`. This will
 update the game if a newer version exists.
 
-DXVK can be updated by running `mtga-wine.sh install-dxvk` after it has already
-been installed.
+DXVK can be updated by running `mtga-wine.sh update-dxvk`.
+
+## Uninstalling
+
+Magic: The Gathering Arena can be uninstalled by running
+`mtga-wine.sh uninstall`. This removes the whole wine prefix.
+
+DXVK can be uninstalled separately with `mtga-wine.sh uninstall-dxvk`, though
+this can be done more cleanly by just uninstalling and reinstalling (and not
+running `mtga-wine.sh install-dxvk` afterwards).
 
 ## Dependencies
 
