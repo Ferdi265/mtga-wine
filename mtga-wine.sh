@@ -61,8 +61,21 @@ noisy-rm-file() {
     fi
 }
 
-temp-dir() {
-    mktemp -d -t 'mtga.tmp.XXXXXXXXXX'
+TEMP_DIR_LIST=()
+create-temp-dir() {
+    TEMP_DIR=$(mktemp -d -t 'mtga.tmp.XXXXXXXXXX')
+    TEMP_DIR_LIST+=( "$TEMP_DIR" )
+    trap cleanup-create-temp-dir EXIT
+
+    log-debug "creating temporary directory '$TEMP_DIR'"
+}
+
+cleanup-create-temp-dir() {
+    log-debug "removing temporary files"
+
+    for TEMP_DIR in "${TEMP_DIR_LIST[@]}"; do
+        noisy-rm-dir "$TEMP_DIR"
+    done
 }
 
 make-workaround-reg() {
@@ -72,6 +85,90 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Wine\X11 Driver]
 "UseTakeFocus"="N"
 EOF
+}
+
+fetch-mtga-installer() {
+    log-debug "getting latest installer URL"
+    INSTALLER_JSON="$(curl --silent "$MTGA_VERSION_URL")"
+    INSTALLER_URL="$(jq -r '.CurrentInstallerURL' <<< "$INSTALLER_JSON")"
+    INSTALLER_VERSION="$(jq -r '.Versions | keys[]' <<< "$INSTALLER_JSON" | head -n1)"
+
+    if [[ "$INSTALLER_JSON" == "" ]]; then
+        log-error "failed to get latest version information"
+        exit 1
+    fi
+
+    if [[ "$INSTALLER_URL" == "" ]]; then
+        log-error "failed to extract installer URL from latest version information"
+        exit 1
+    fi
+
+    if [[ "$INSTALLER_VERSION" == "" ]]; then
+        log-error "failed to extract version number from latest version information"
+        exit 1
+    fi
+
+    log-info "latest version is $INSTALLER_VERSION"
+    if [[ -f "$MTGA_INSTALL_DIR/version" ]]; then
+        CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/version")"
+
+        log-info "current version is $CURRENT_VERSION"
+
+        if [[ "$INSTALLER_VERSION" == "$CURRENT_VERSION" ]]; then
+            log-info "mtga-wine is up to date"
+            exit 0
+        fi
+    fi
+
+    log-debug "downloading latest installer"
+    curl -o "$1" "$INSTALLER_URL"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to download latest installer"
+        exit 1
+    fi
+}
+
+fetch-dxvk-installer() {
+    log-debug "getting latest release URL"
+    RELEASE_JSON="$(curl --silent "$DXVK_RELEASE_URL")"
+    RELEASE_URL="$(jq -r '.assets[].browser_download_url' <<< "$RELEASE_JSON" | head -n1)"
+    RELEASE_VERSION="$(jq -r '.tag_name' <<< "$RELEASE_JSON")"
+
+    if [[ "$RELEASE_JSON" == "" ]]; then
+        log-error "failed to get latest release information"
+        exit 1
+    fi
+
+    if [[ "$RELEASE_URL" == "" ]]; then
+        log-error "failed to extract release URL from latest release information"
+        exit 1
+    fi
+
+    if [[ "$RELEASE_VERSION" == "" ]]; then
+        log-error "failed to extract version number from latest release information"
+        exit 1
+    fi
+
+    log-info "latest DXVK version is $RELEASE_VERSION"
+    if [[ -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
+        CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/dxvk-version")"
+
+        log-info "current DXVK version is $CURRENT_VERSION"
+
+        if [[ "$RELEASE_VERSION" == "$CURRENT_VERSION" ]]; then
+            log-info "DXVK is up to date"
+            exit 0
+        fi
+    fi
+
+    log-debug "downloading latest release"
+    curl -L -o "$1" "$RELEASE_URL"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to download latest release"
+        exit 1
+    fi
 }
 
 mtga-wine() {
@@ -123,17 +220,21 @@ mtga-install() {
     log-debug "setting windows version to win7"
     mtga-wine winecfg /v win7
 
+    create-temp-dir
+
     log-debug "setting workaround registry keys"
-    TEMP_DIR="$(temp-dir)"
     make-workaround-reg "$TEMP_DIR/workaround.reg"
     mtga-wine regedit /C "$TEMP_DIR/workaround.reg"
 
-    log-debug "removing temporary files"
-    rm -rf "$TEMP_DIR"
+    fetch-mtga-installer "$TEMP_DIR/mtga-installer.msi"
 
-    log-info "running initial update"
-    mtga-update
+    log-info "running latest installer"
+    mtga-wine msiexec /i "$TEMP_DIR/mtga-installer.msi" /qn
 
+    log-debug "saving current version"
+    echo "$INSTALLER_VERSION" > "$MTGA_INSTALL_DIR/version"
+
+    log-info "finished installing mtga-wine"
 }
 
 mtga-update() {
@@ -144,52 +245,12 @@ mtga-update() {
 
     log-info "updating mtga-wine"
 
-    log-debug "getting latest installer URL"
-    INSTALLER_JSON="$(curl --silent "$MTGA_VERSION_URL")"
-    INSTALLER_URL="$(jq -r '.CurrentInstallerURL' <<< "$INSTALLER_JSON")"
-    INSTALLER_VERSION="$(jq -r '.Versions | keys[]' <<< "$INSTALLER_JSON" | head -n1)"
+    create-temp-dir
 
-    if [[ "$INSTALLER_JSON" == "" ]]; then
-        log-error "failed to get latest version information"
-        exit 1
-    fi
-
-    if [[ "$INSTALLER_URL" == "" ]]; then
-        log-error "failed to extract installer URL from latest version information"
-        exit 1
-    fi
-
-    if [[ "$INSTALLER_VERSION" == "" ]]; then
-        log-error "failed to extract version number from latest version information"
-        exit 1
-    fi
-
-    log-info "latest version is $INSTALLER_VERSION"
-    if [[ -f "$MTGA_INSTALL_DIR/version" ]]; then
-        CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/version")"
-
-        log-info "current version is $CURRENT_VERSION"
-
-        if [[ "$INSTALLER_VERSION" == "$CURRENT_VERSION" ]]; then
-            log-info "mtga-wine is up to date"
-            exit 0
-        fi
-    fi
-
-    log-debug "downloading latest installer"
-    TEMP_DIR="$(temp-dir)"
-    curl -o "$TEMP_DIR/mtga-installer.msi" "$INSTALLER_URL"
-
-    if [[ $? -ne 0 ]]; then
-        log-error "failed to download latest installer"
-        exit 1
-    fi
+    fetch-mtga-installer "$TEMP_DIR/mtga-installer.msi"
 
     log-info "running latest installer"
     mtga-wine msiexec /i "$TEMP_DIR/mtga-installer.msi" /qn
-
-    log-debug "removing temporary files"
-    rm -rf "$TEMP_DIR"
 
     log-debug "saving current version"
     echo "$INSTALLER_VERSION" > "$MTGA_INSTALL_DIR/version"
@@ -211,48 +272,16 @@ mtga-install-dxvk() {
         exit 1
     fi
 
+    if [[ -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
+        log-error "DXVK is already installed"
+        exit 1
+    fi
+
     log-info "installing DXVK into mtga-wine"
 
-    log-debug "getting latest release URL"
-    RELEASE_JSON="$(curl --silent "$DXVK_RELEASE_URL")"
-    RELEASE_URL="$(jq -r '.assets[].browser_download_url' <<< "$RELEASE_JSON" | head -n1)"
-    RELEASE_VERSION="$(jq -r '.tag_name' <<< "$RELEASE_JSON")"
+    create-temp-dir
 
-    if [[ "$RELEASE_JSON" == "" ]]; then
-        log-error "failed to get latest release information"
-        exit 1
-    fi
-
-    if [[ "$RELEASE_URL" == "" ]]; then
-        log-error "failed to extract release URL from latest release information"
-        exit 1
-    fi
-
-    if [[ "$RELEASE_VERSION" == "" ]]; then
-        log-error "failed to extract version number from latest release information"
-        exit 1
-    fi
-
-    log-info "latest DXVK version is $RELEASE_VERSION"
-    if [[ -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
-        CURRENT_VERSION="$(cat "$MTGA_INSTALL_DIR/dxvk-version")"
-
-        log-info "current DXVK version is $CURRENT_VERSION"
-
-        if [[ "$RELEASE_VERSION" == "$CURRENT_VERSION" ]]; then
-            log-info "DXVK is up to date"
-            exit 0
-        fi
-    fi
-
-    log-debug "downloading latest release"
-    TEMP_DIR="$(temp-dir)"
-    curl -L -o "$TEMP_DIR/dxvk.tar.gz" "$RELEASE_URL"
-
-    if [[ $? -ne 0 ]]; then
-        log-error "failed to download latest release"
-        exit 1
-    fi
+    fetch-dxvk-installer "$TEMP_DIR/dxvk.tar.gz"
 
     log-debug "extracting latest release"
     tar -C "$TEMP_DIR" --strip-components=1 -xf "$TEMP_DIR/dxvk.tar.gz"
@@ -265,13 +294,77 @@ mtga-install-dxvk() {
     log-info "running DXVK setup script"
     WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" install
 
-    log-debug "removing temporary files"
-    rm -rf "$TEMP_DIR"
+    log-debug "saving current version"
+    echo "$RELEASE_VERSION" > "$MTGA_INSTALL_DIR/dxvk-version"
+
+    log-info "finished installing DXVK"
+}
+
+mtga-update-dxvk() {
+    if [[ ! -d "$MTGA_INSTALL_DIR/prefix" ]]; then
+        log-error "mtga-wine is not installed, please install first"
+        exit 1
+    fi
+
+    if [[ ! -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
+        log-error "DXVK is not installed, please install first"
+        exit 1
+    fi
+
+    log-info "updating DXVK in mtga-wine"
+
+    create-temp-dir
+
+    fetch-dxvk-installer "$TEMP_DIR/dxvk.tar.gz"
+
+    log-debug "extracting latest release"
+    tar -C "$TEMP_DIR" --strip-components=1 -xf "$TEMP_DIR/dxvk.tar.gz"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to extract latest release"
+        exit 1
+    fi
+
+    log-info "running DXVK setup script"
+    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" install
 
     log-debug "saving current version"
     echo "$RELEASE_VERSION" > "$MTGA_INSTALL_DIR/dxvk-version"
 
     log-info "finished installing DXVK"
+}
+
+mtga-uninstall-dxvk() {
+    if [[ ! -d "$MTGA_INSTALL_DIR/prefix" ]]; then
+        log-error "mtga-wine is not installed"
+        exit 1
+    fi
+
+    if [[ ! -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
+        log-info "DXVK is not installed"
+        exit 1
+    fi
+
+    log-info "uninstalling DXVK from mtga-wine"
+
+    create-temp-dir
+
+    noisy-rm-file "$MTGA_INSTALL_DIR/dxvk-version"
+
+    fetch-dxvk-installer "$TEMP_DIR/dxvk.tar.gz"
+
+    log-debug "extracting latest release"
+    tar -C "$TEMP_DIR" --strip-components=1 -xf "$TEMP_DIR/dxvk.tar.gz"
+
+    if [[ $? -ne 0 ]]; then
+        log-error "failed to extract latest release"
+        exit 1
+    fi
+
+    log-info "running DXVK uninstall script"
+    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" uninstall
+
+    log-info "finished uninstalling DXVK"
 }
 
 mtga-help() {
@@ -283,6 +376,8 @@ mtga-help() {
     echo " - update .......... update MTG Arena to the latest version"
     echo " - uninstall ....... remove MTG arena wine prefix"
     echo " - install-dxvk .... install DXVK into the wine prefix"
+    echo " - update-dxvk ..... update DXVK in the wine prefix"
+    echo " - uninstall-dxvk .. uninstall DXVK from the wine prefix"
 }
 
 mtga-invalid-usage() {
@@ -303,6 +398,8 @@ case "$1" in
     update) mtga-update;;
     uninstall) mtga-uninstall;;
     install-dxvk) mtga-install-dxvk;;
+    update-dxvk) mtga-update-dxvk;;
+    uninstall-dxvk) mtga-uninstall-dxvk;;
     help) mtga-help;;
     *) mtga-invalid-usage;;
 esac
