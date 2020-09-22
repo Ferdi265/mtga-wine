@@ -6,10 +6,12 @@ SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 
 # environment variable defaults
 MTGA_INSTALL_DIR="${MTGA_INSTALL_DIR:-"$HOME/.local/share/mtga"}"
+MTGA_ARCH=${MTGA_ARCH:-win32}
 MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
 MTGA_FORCE_INSTALL=${MTGA_FORCE_INSTALL:-0}
-MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
-DXVK_RELEASE_URL="${DXVK_RELEASE_URL:-"https://api.github.com/repos/doitsujin/dxvk/releases/latest"}"
+MTGA_WIN32_VERSION_URL=${MTGA_WIN32_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}
+MTGA_WIN64_VERSION_URL=${MTGA_WIN64_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows64/version"}
+DXVK_RELEASE_URL=${DXVK_RELEASE_URL:-"https://api.github.com/repos/doitsujin/dxvk/releases/latest"}
 
 # output color variables
 # (see 'man console_codes', section 'ECMA-48 Set Graphics Rendition')
@@ -90,6 +92,18 @@ EOF
 
 fetch-mtga-installer() {
     log-debug "getting latest installer URL"
+
+    if [[ -z "$MTGA_VERSION_URL" ]]; then
+        if [[ "$MTGA_ARCH" == win32 ]]; then
+            MTGA_VERSION_URL="$MTGA_WIN32_VERSION_URL"
+        elif [[ "$MTGA_ARCH" == win32 ]]; then
+            MTGA_VERSION_URL="$MTGA_WIN64_VERSION_URL"
+        else
+            log-error "could not find version URL for architecture '$MTGA_ARCH'"
+            exit 1
+        fi
+    fi
+
     INSTALLER_JSON="$(curl --silent "$MTGA_VERSION_URL")"
     INSTALLER_URL="$(jq -r '.CurrentInstallerURL' <<< "$INSTALLER_JSON")"
     INSTALLER_VERSION="$(jq -r '.Versions | keys[]' <<< "$INSTALLER_JSON" | head -n1)"
@@ -184,7 +198,7 @@ fetch-dxvk-installer() {
 
 mtga-run-in-prefix() {
     mkdir -p "$MTGA_INSTALL_DIR/prefix"
-    WINEARCH=win32 WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$@"
+    WINEARCH="$MTGA_ARCH" WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$@"
 }
 
 mtga-wine() {
@@ -202,6 +216,13 @@ check-installed mktemp
 
 if [[ $MISSING_PROGRAMS -ne 0 ]]; then
     log-error "aborting due to missing required commands"
+    exit 1
+fi
+
+# check variables for validity
+
+if [[ "$MTGA_ARCH" != "win32" && "$MTGA_ARCH" != "win64" ]]; then
+    log-error "invalid wine architecture '$MTGA_ARCH'"
     exit 1
 fi
 
