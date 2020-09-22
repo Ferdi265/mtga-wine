@@ -220,7 +220,12 @@ mtga-run() {
 mtga-install() {
     if [[ -e "$MTGA_INSTALL_DIR/prefix" ]]; then
         log-error "mtga-wine is already installed"
-        exit 1
+
+        if [[ "$MTGA_FORCE_INSTALL" -eq 1 ]]; then
+            log-warn "forcing reinstallation"
+        else
+            exit 1
+        fi
     fi
 
     log-info "installing mtga-wine"
@@ -285,7 +290,12 @@ mtga-install-dxvk() {
 
     if [[ -f "$MTGA_INSTALL_DIR/dxvk-version" ]]; then
         log-error "DXVK is already installed"
-        exit 1
+
+        if [[ "$MTGA_FORCE_INSTALL" -eq 1 ]]; then
+            log-warn "forcing reinstallation"
+        else
+            exit 1
+        fi
     fi
 
     log-info "installing DXVK into mtga-wine"
