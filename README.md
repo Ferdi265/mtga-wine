@@ -20,11 +20,8 @@ commands:
 
 ## Installation
 
-Just put the script anywhere you would like to run it from. The
-`MTGA_INSTALL_DIR` environment variable controls where the wine prefix will be
-placed.
-
-The default installation directory is `~/.local/share/mtga`.
+Just put the script anywhere you would like to run it from. The default
+installation directory is `~/.local/share/mtga`.
 
 Then, run `mtga-wine.sh install` to set up the prefix and install Magic: The
 Gathering Arena. To install the 64 bit version of Magic: The Gathering Arena,
