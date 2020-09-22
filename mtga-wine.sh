@@ -7,6 +7,7 @@ SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 # environment variable defaults
 MTGA_INSTALL_DIR="${MTGA_INSTALL_DIR:-"$HOME/.local/share/mtga"}"
 MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
+MTGA_FORCE_INSTALL=${MTGA_FORCE_INSTALL:-0}
 MTGA_VERSION_URL="${MTGA_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}"
 DXVK_RELEASE_URL="${DXVK_RELEASE_URL:-"https://api.github.com/repos/doitsujin/dxvk/releases/latest"}"
 
@@ -116,7 +117,12 @@ fetch-mtga-installer() {
 
         if [[ "$INSTALLER_VERSION" == "$CURRENT_VERSION" ]]; then
             log-info "mtga-wine is up to date"
-            exit 0
+
+            if [[ "$MTGA_FORCE_INSTALL" -eq 1 ]]; then
+                log-warn "forcing reinstallation"
+            else
+                exit 0
+            fi
         fi
     fi
 
@@ -158,7 +164,12 @@ fetch-dxvk-installer() {
 
         if [[ "$RELEASE_VERSION" == "$CURRENT_VERSION" ]]; then
             log-info "DXVK is up to date"
-            exit 0
+
+            if [[ "$MTGA_FORCE_INSTALL" -eq 1 ]]; then
+                log-warn "forcing reinstallation"
+            else
+                exit 0
+            fi
         fi
     fi
 
