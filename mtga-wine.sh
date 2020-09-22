@@ -5,12 +5,14 @@ SCRIPT_FILE="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_FILE")"
 
 # environment variable defaults
-MTGA_INSTALL_DIR="${MTGA_INSTALL_DIR:-"$HOME/.local/share/mtga"}"
-MTGA_ARCH=${MTGA_ARCH:-win32}
+MTGA_INSTALL_DIR=${MTGA_INSTALL_DIR:-"$HOME/.local/share/mtga"}
+MTGA_ARCH=${MTGA_ARCH:-}
 MTGA_LOG_DEBUG=${MTGA_LOG_DEBUG:-1}
 MTGA_FORCE_INSTALL=${MTGA_FORCE_INSTALL:-0}
+MTGA_FORCE_ARCH=${MTGA_FORCE_ARCH:-0}
 MTGA_WIN32_VERSION_URL=${MTGA_WIN32_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows32/version"}
 MTGA_WIN64_VERSION_URL=${MTGA_WIN64_VERSION_URL:-"https://mtgarena.downloads.wizards.com/Live/Windows64/version"}
+MTGA_VERSION_URL=${MTGA_VERSION_URL:-}
 DXVK_RELEASE_URL=${DXVK_RELEASE_URL:-"https://api.github.com/repos/doitsujin/dxvk/releases/latest"}
 
 # output color variables
@@ -95,6 +97,30 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Wine\X11 Driver]
 "UseTakeFocus"="N"
 EOF
+}
+
+check-wine-arch() {
+    log-info "checking wine architecture"
+
+    if [[ -f "$MTGA_INSTALL_DIR/winearch" ]]; then
+        INSTALLED_ARCH="$(cat "$MTGA_INSTALL_DIR/winearch")"
+
+        if [[ -z "$MTGA_ARCH" ]]; then
+            MTGA_ARCH="$INSTALLED_ARCH"
+            log-info "using installed architecture '$MTGA_ARCH'"
+        elif [[ "$MTGA_ARCH" != "$INSTALLED_ARCH" ]]; then
+            log-error "installed architecture '$INSTALLED_ARCH' doesn't match MTGA_ARCH '$MTGA_ARCH'"
+
+            if [[ "$MTGA_FORCE_ARCH" -eq 1 ]]; then
+                log-warn "forcing use of architecture '$MTGA_ARCH'"
+            else
+                exit 1
+            fi
+        fi
+    else
+        MTGA_ARCH=win32
+        log-info "defaulting to architecture '$MTGA_ARCH'"
+    fi
 }
 
 fetch-mtga-installer() {
@@ -241,6 +267,10 @@ mtga-run() {
         exit 1
     fi
 
+    log-info "running mtga-wine"
+
+    check-wine-arch
+
     mkdir -p "$MTGA_INSTALL_DIR/cache"
 
     (
@@ -262,8 +292,13 @@ mtga-install() {
 
     log-info "installing mtga-wine"
 
+    check-wine-arch
+
     log-debug "creating wine prefix"
     mtga-wine wineboot
+
+    log-debug "saving wine architecture"
+    echo "$MTGA_ARCH" > "$MTGA_INSTALL_DIR/winearch"
 
     log-debug "setting windows version to win7"
     mtga-wine winecfg /v win7
@@ -293,6 +328,8 @@ mtga-update() {
 
     log-info "updating mtga-wine"
 
+    check-wine-arch
+
     create-temp-dir
 
     fetch-mtga-installer "$TEMP_DIR/mtga-installer.msi"
@@ -312,6 +349,7 @@ mtga-uninstall() {
     noisy-rm-dir "$MTGA_INSTALL_DIR/cache"
     noisy-rm-file "$MTGA_INSTALL_DIR/version"
     noisy-rm-file "$MTGA_INSTALL_DIR/dxvk-version"
+    noisy-rm-file "$MTGA_INSTALL_DIR/winearch"
     noisy-rm-empty-dir "$MTGA_INSTALL_DIR"
 }
 
@@ -332,6 +370,8 @@ mtga-install-dxvk() {
     fi
 
     log-info "installing DXVK into mtga-wine"
+
+    check-wine-arch
 
     create-temp-dir
 
@@ -367,6 +407,8 @@ mtga-update-dxvk() {
 
     log-info "updating DXVK in mtga-wine"
 
+    check-wine-arch
+
     create-temp-dir
 
     fetch-dxvk-installer "$TEMP_DIR/dxvk.tar.gz"
@@ -400,6 +442,8 @@ mtga-uninstall-dxvk() {
     fi
 
     log-info "uninstalling DXVK from mtga-wine"
+
+    check-wine-arch
 
     create-temp-dir
 
