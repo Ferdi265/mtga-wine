@@ -182,9 +182,13 @@ fetch-dxvk-installer() {
     fi
 }
 
-mtga-wine() {
+mtga-run-in-prefix() {
     mkdir -p "$MTGA_INSTALL_DIR/prefix"
-    WINEARCH=win32 WINEPREFIX="$MTGA_INSTALL_DIR/prefix" wine "$@"
+    WINEARCH=win32 WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$@"
+}
+
+mtga-wine() {
+    mtga-run-in-prefix wine "$@"
 }
 
 # check for needed programs
@@ -313,7 +317,7 @@ mtga-install-dxvk() {
     fi
 
     log-info "running DXVK setup script"
-    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" install
+    mtga-run-in-prefix "$TEMP_DIR/setup_dxvk.sh" install
 
     log-debug "saving current version"
     echo "$RELEASE_VERSION" > "$MTGA_INSTALL_DIR/dxvk-version"
@@ -347,7 +351,7 @@ mtga-update-dxvk() {
     fi
 
     log-info "running DXVK setup script"
-    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" install
+    mtga-run-in-prefix "$TEMP_DIR/setup_dxvk.sh" install
 
     log-debug "saving current version"
     echo "$RELEASE_VERSION" > "$MTGA_INSTALL_DIR/dxvk-version"
@@ -383,7 +387,7 @@ mtga-uninstall-dxvk() {
     fi
 
     log-info "running DXVK uninstall script"
-    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" "$TEMP_DIR/setup_dxvk.sh" uninstall
+    mtga-run-in-prefix "$TEMP_DIR/setup_dxvk.sh" uninstall
 
     log-info "finished uninstalling DXVK"
 }
