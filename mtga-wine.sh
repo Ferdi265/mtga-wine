@@ -254,7 +254,7 @@ fi
 
 # check variables for validity
 
-if [[ "$MTGA_ARCH" != "win32" && "$MTGA_ARCH" != "win64" ]]; then
+if [[ -n "$MTGA_ARCH" && "$MTGA_ARCH" != "win32" && "$MTGA_ARCH" != "win64" ]]; then
     log-error "invalid wine architecture '$MTGA_ARCH'"
     exit 1
 fi
