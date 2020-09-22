@@ -57,6 +57,13 @@ noisy-rm-dir() {
     fi
 }
 
+noisy-rm-empty-dir() {
+    if [[ -d "$1" ]]; then
+        log-debug "removing '$1'"
+        rmdir "$1"
+    fi
+}
+
 noisy-rm-file() {
     if [[ -f "$1" ]]; then
         log-debug "removing '$1'"
@@ -305,6 +312,7 @@ mtga-uninstall() {
     noisy-rm-dir "$MTGA_INSTALL_DIR/cache"
     noisy-rm-file "$MTGA_INSTALL_DIR/version"
     noisy-rm-file "$MTGA_INSTALL_DIR/dxvk-version"
+    noisy-rm-empty-dir "$MTGA_INSTALL_DIR"
 }
 
 mtga-install-dxvk() {
