@@ -184,7 +184,7 @@ fetch-dxvk-installer() {
 
 mtga-wine() {
     mkdir -p "$MTGA_INSTALL_DIR/prefix"
-    WINEPREFIX="$MTGA_INSTALL_DIR/prefix" wine "$@"
+    WINEARCH=win32 WINEPREFIX="$MTGA_INSTALL_DIR/prefix" wine "$@"
 }
 
 # check for needed programs
