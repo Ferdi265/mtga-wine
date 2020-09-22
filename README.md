@@ -1,7 +1,7 @@
 # `mtga-wine`
 
 A simple script that manages a wine prefix for Magic: The Gathering Arena with
-support for both 32 bit and 64 bit wine prefixes.
+support for both 32 bit and 64 bit versions of the game.
 
 ## Usage
 
