@@ -129,7 +129,7 @@ fetch-mtga-installer() {
     if [[ -z "$MTGA_VERSION_URL" ]]; then
         if [[ "$MTGA_ARCH" == win32 ]]; then
             MTGA_VERSION_URL="$MTGA_WIN32_VERSION_URL"
-        elif [[ "$MTGA_ARCH" == win32 ]]; then
+        elif [[ "$MTGA_ARCH" == win64 ]]; then
             MTGA_VERSION_URL="$MTGA_WIN64_VERSION_URL"
         else
             log-error "could not find version URL for architecture '$MTGA_ARCH'"
