@@ -100,14 +100,14 @@ EOF
 }
 
 check-wine-arch() {
-    log-info "checking wine architecture"
+    log-debug "checking wine architecture"
 
     if [[ -f "$MTGA_INSTALL_DIR/winearch" ]]; then
         INSTALLED_ARCH="$(cat "$MTGA_INSTALL_DIR/winearch")"
 
         if [[ -z "$MTGA_ARCH" ]]; then
             MTGA_ARCH="$INSTALLED_ARCH"
-            log-info "using installed architecture '$MTGA_ARCH'"
+            log-debug "using installed architecture '$MTGA_ARCH'"
         elif [[ "$MTGA_ARCH" != "$INSTALLED_ARCH" ]]; then
             log-error "installed architecture '$INSTALLED_ARCH' doesn't match MTGA_ARCH '$MTGA_ARCH'"
 
@@ -119,7 +119,7 @@ check-wine-arch() {
         fi
     else
         MTGA_ARCH=win32
-        log-info "defaulting to architecture '$MTGA_ARCH'"
+        log-debug "defaulting to architecture '$MTGA_ARCH'"
     fi
 }
 
