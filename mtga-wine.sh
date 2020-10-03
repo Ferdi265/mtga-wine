@@ -112,7 +112,7 @@ check-wine-arch() {
             log-error "installed architecture '$INSTALLED_ARCH' doesn't match MTGA_ARCH '$MTGA_ARCH'"
 
             if [[ "$MTGA_FORCE_ARCH" -eq 1 ]]; then
-                log-warn "forcing use of architecture '$MTGA_ARCH'"
+                log-warn "forcing use of architecture from MTGA_ARCH '$MTGA_ARCH'"
             else
                 exit 1
             fi
