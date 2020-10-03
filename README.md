@@ -42,8 +42,8 @@ Magic: The Gathering Arena can be uninstalled by running
 `mtga-wine.sh uninstall`. This removes the whole wine prefix.
 
 DXVK can be uninstalled separately with `mtga-wine.sh uninstall-dxvk`, though
-this can be done more cleanly by just uninstalling and reinstalling (and not
-running `mtga-wine.sh install-dxvk` afterwards).
+this can be done more cleanly by just uninstalling and reinstalling using
+`mtga-wine uninstall && mtga-wine.sh install`.
 
 ## Environment Variables
 
