@@ -117,9 +117,11 @@ check-wine-arch() {
                 exit 1
             fi
         fi
-    else
+    elif [[ -z "$MTGA_ARCH" ]]; then
         MTGA_ARCH=win32
         log-debug "defaulting to architecture '$MTGA_ARCH'"
+    else
+        log-debug "using architecture from MTGA_ARCH '$MTGA_ARCH'"
     fi
 }
 
