@@ -12,7 +12,7 @@ commands:
  - run ............. run MTG Arena
  - install ......... download MTG Arena and prepare wine prefix
  - update .......... update MTG Arena to the latest version
- - uninstall ....... remove MTG arena wine prefix
+ - uninstall ....... remove MTG Arena wine prefix
  - install-dxvk .... install DXVK into the wine prefix
  - update-dxvk ..... update DXVK in the wine prefix
  - uninstall-dxvk .. uninstall DXVK from the wine prefix

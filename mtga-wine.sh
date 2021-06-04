@@ -474,7 +474,7 @@ mtga-help() {
     echo " - run ............. run MTG Arena"
     echo " - install ......... download MTG Arena and prepare wine prefix"
     echo " - update .......... update MTG Arena to the latest version"
-    echo " - uninstall ....... remove MTG arena wine prefix"
+    echo " - uninstall ....... remove MTG Arena wine prefix"
     echo " - install-dxvk .... install DXVK into the wine prefix"
     echo " - update-dxvk ..... update DXVK in the wine prefix"
     echo " - uninstall-dxvk .. uninstall DXVK from the wine prefix"
